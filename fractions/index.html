@@ -195,6 +195,32 @@
       gap: 18px;
     }
 
+    .common-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .common-heading {
+      margin: 0;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .common-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .common-arrow {
+      color: var(--teal);
+      font-size: 24px;
+      font-weight: 950;
+      text-align: center;
+    }
+
     .common-row {
       display: grid;
       gap: 8px;
@@ -221,6 +247,11 @@
       border: 2px solid var(--ink);
       border-radius: 8px;
       background: #fff;
+    }
+
+    .common-bar.original {
+      gap: 3px;
+      border-color: var(--line);
     }
 
     .common-bar span {
@@ -445,8 +476,13 @@
         min-height: 52px;
       }
 
-      .compare-row {
+      .compare-row,
+      .common-flow {
         grid-template-columns: 1fr;
+      }
+
+      .common-arrow {
+        transform: rotate(90deg);
       }
 
       .equal {
@@ -649,14 +685,16 @@
       return (a * b) / gcd(a, b);
     }
 
-    function makeCommonBar(label, originalText, convertedText, filled, total, className) {
+    function makeCommonBar(label, originalText, convertedText, filled, total, className, isOriginal = false) {
       const row = document.createElement("div");
       row.className = "common-row";
       const title = document.createElement("div");
       title.className = "common-label";
-      title.innerHTML = `<span>${label}: <strong>${originalText}</strong></span><span>${convertedText}</span>`;
+      title.innerHTML = convertedText
+        ? `<span>${label}: <strong>${originalText}</strong></span><span>${convertedText}</span>`
+        : `<span>${label}: <strong>${originalText}</strong></span><span>${total}칸 중 ${filled}칸</span>`;
       const bar = document.createElement("div");
-      bar.className = "common-bar";
+      bar.className = isOriginal ? "common-bar original" : "common-bar";
       bar.style.setProperty("--parts", total);
       for (let i = 0; i < total; i += 1) {
         const cell = document.createElement("span");
@@ -675,10 +713,36 @@
       const secondNum = compareNumerator * secondScale;
       const wrapper = document.createElement("div");
       wrapper.className = "common-model";
-      wrapper.append(
+
+      const originalSection = document.createElement("div");
+      originalSection.className = "common-section";
+      const originalHeading = document.createElement("p");
+      originalHeading.className = "common-heading";
+      originalHeading.textContent = "처음에는 조각 크기가 서로 다릅니다";
+      const originalFlow = document.createElement("div");
+      originalFlow.className = "common-flow";
+      originalFlow.append(
+        makeCommonBar("첫 번째", `${numerator}/${denominator}`, "", numerator, denominator, "first", true),
+        makeCommonBar("두 번째", `${compareNumerator}/${compareDenominator}`, "", compareNumerator, compareDenominator, "second", true)
+      );
+      originalSection.append(originalHeading, originalFlow);
+
+      const arrow = document.createElement("div");
+      arrow.className = "common-arrow";
+      arrow.textContent = "↓ 분모를 같게 쪼개기";
+
+      const convertedSection = document.createElement("div");
+      convertedSection.className = "common-section";
+      const convertedHeading = document.createElement("p");
+      convertedHeading.className = "common-heading";
+      convertedHeading.textContent = `통분하면 둘 다 ${commonDen}칸짜리 막대가 됩니다`;
+      convertedSection.append(
+        convertedHeading,
         makeCommonBar("첫 번째", `${numerator}/${denominator}`, `${firstNum}/${commonDen}`, firstNum, commonDen, "first"),
         makeCommonBar("두 번째", `${compareNumerator}/${compareDenominator}`, `${secondNum}/${commonDen}`, secondNum, commonDen, "second")
       );
+
+      wrapper.append(originalSection, arrow, convertedSection);
       const answer = document.createElement("p");
       answer.className = "common-answer";
       if (firstNum > secondNum) answer.textContent = `${firstNum}/${commonDen}이 더 크므로 ${numerator}/${denominator}이 더 큽니다.`;
