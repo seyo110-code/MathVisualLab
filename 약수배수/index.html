@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GearSync: GCD & LCM Visualizer</title>
+  <style>
+    :root {
+      --bg: #f7f8f4;
+      --ink: #20231f;
+      --muted: #5d665e;
+      --line: #d9ded4;
+      --panel: #ffffff;
+      --green: #2f7d5b;
+      --blue: #3267a8;
+      --red: #bf4b47;
+      --gold: #c28a26;
+      --shadow: 0 16px 36px rgba(32, 35, 31, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 248, 244, 0.96)),
+        radial-gradient(circle at 12% 8%, rgba(47, 125, 91, 0.14), transparent 30%),
+        radial-gradient(circle at 86% 16%, rgba(50, 103, 168, 0.14), transparent 28%),
+        var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: grid;
+      gap: 10px;
+      padding: 8px 0 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(310px, 0.75fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      overflow: hidden;
+    }
+
+    .stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .readout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-weight: 800;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef4ef;
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .gear-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 520px;
+      padding: 18px;
+      background:
+        linear-gradient(90deg, rgba(32, 35, 31, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(32, 35, 31, 0.035) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+
+    canvas {
+      width: min(100%, 820px);
+      aspect-ratio: 1 / 0.72;
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-width: 42px;
+      height: 42px;
+      border: 1px solid #bfc7bd;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.primary {
+      min-width: 92px;
+      padding: 0 14px;
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(47, 125, 91, 0.32);
+      outline-offset: 2px;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 140px;
+      accent-color: var(--green);
+    }
+
+    input[type="number"] {
+      width: 82px;
+      height: 40px;
+      border: 1px solid #bfc7bd;
+      border-radius: 8px;
+      padding: 0 10px;
+      font: inherit;
+      font-weight: 800;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel + .panel {
+      margin-top: 18px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .fact {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .fact div {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfa;
+    }
+
+    .fact dt {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .fact dd {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .gear-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .gear-inputs label {
+      display: grid;
+      align-items: start;
+      gap: 7px;
+      min-height: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfa;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .gear-inputs input {
+      width: 100%;
+    }
+
+    .explain {
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .strips {
+      display: grid;
+      gap: 14px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .strip-name {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .strip-name span {
+      min-width: 0;
+    }
+
+    .strip-name span:last-child {
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dots {
+      display: grid;
+      width: 100%;
+      grid-template-columns: repeat(var(--dot-count, 35), minmax(0, 1fr));
+      gap: clamp(1px, 0.45vw, 3px);
+      align-items: center;
+    }
+
+    .dot {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #d7ddd4;
+      min-width: 0;
+    }
+
+    .dot.on15 {
+      background: var(--blue);
+    }
+
+    .dot.on35 {
+      background: var(--gold);
+    }
+
+    .dot.both {
+      background: var(--red);
+      box-shadow: 0 0 0 2px rgba(191, 75, 71, 0.18);
+    }
+
+    .number-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: clamp(10px, 2.2vw, 12px);
+      font-weight: 800;
+      text-align: center;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .number-line span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .common-box {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      min-height: 36px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-weight: 900;
+    }
+
+    .chip.answer {
+      background: #eff6f1;
+      border-color: rgba(47, 125, 91, 0.35);
+      color: var(--green);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .gear-wrap {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 20px, 1180px);
+        padding-top: 18px;
+      }
+
+      .stage-top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .controls {
+        justify-content: space-between;
+      }
+
+      .gear-inputs {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        aspect-ratio: 1 / 0.9;
+      }
+
+      .gear-wrap {
+        min-height: 360px;
+        padding: 8px;
+      }
+
+      input[type="range"] {
+        width: 110px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>GearSync: <span id="titleA">15</span> Teeth × <span id="titleB">35</span> Teeth</h1>
+      <p class="subtitle" id="subtitle">두 톱니바퀴가 한 칸씩 맞물려 돌 때, 둘 다 출발 표시가 다시 위로 오는 첫 순간은 105번 맞물린 뒤입니다. 이 첫 만남이 최소공배수입니다.</p>
+    </header>
+
+    <section class="layout" aria-label="최대공약수와 최소공배수 시각화">
+      <div class="stage">
+        <div class="stage-top">
+          <div class="readout">
+            <span class="badge" id="stepBadge">맞물림 0회</span>
+            <span id="meetText">출발점에서 함께 시작</span>
+          </div>
+          <div class="controls" aria-label="애니메이션 조작">
+            <button type="button" id="backBtn" aria-label="한 칸 뒤로">←</button>
+            <button type="button" class="primary" id="playBtn">재생</button>
+            <button type="button" id="nextBtn" aria-label="한 칸 앞으로">→</button>
+            <button type="button" id="resetBtn">처음</button>
+            <label>
+              속도
+              <input id="speed" type="range" min="1" max="6" value="3">
+            </label>
+          </div>
+        </div>
+        <div class="gear-wrap">
+          <canvas id="gears" width="960" height="690" aria-label="톱니바퀴 회전 그림"></canvas>
+        </div>
+      </div>
+
+      <aside>
+        <div class="panel">
+          <h2>톱니 수 바꾸기</h2>
+          <div class="gear-inputs">
+            <label>
+              왼쪽 톱니
+              <input id="gearA" type="number" min="2" max="60" value="15">
+            </label>
+            <label>
+              오른쪽 톱니
+              <input id="gearB" type="number" min="2" max="60" value="35">
+            </label>
+          </div>
+          <p class="explain" id="inputHint">2부터 60까지 넣을 수 있습니다. 값이 바뀌면 처음부터 다시 돕니다.</p>
+        </div>
+
+        <div class="panel">
+          <h2>핵심 결과</h2>
+          <dl class="fact">
+            <div>
+              <dt>최대공약수</dt>
+              <dd id="gcdText">gcd(15, 35) = 5</dd>
+            </div>
+            <div>
+              <dt>최소공배수</dt>
+              <dd id="lcmText">lcm(15, 35) = 105</dd>
+            </div>
+            <div>
+              <dt>처음 만날 때까지</dt>
+              <dd id="meshTotalText">맞물림 105회</dd>
+            </div>
+          </dl>
+          <p class="explain" id="resultExplain">15와 35를 모두 나누는 가장 큰 수는 5입니다. 두 수의 배수가 처음으로 겹치는 수는 105입니다.</p>
+        </div>
+
+        <div class="panel">
+          <h2>공통약수</h2>
+          <div class="common-box" id="divisorBox" aria-label="공통약수"></div>
+          <p class="explain" id="factorExplain">15 = 3 × 5, 35 = 7 × 5 이므로 함께 들어 있는 가장 큰 묶음은 5입니다.</p>
+        </div>
+
+        <div class="panel">
+          <h2>배수에서 보는 첫 만남</h2>
+          <div class="strips">
+            <div>
+              <div class="strip-name"><span id="multipleLabelA">15의 배수</span><span id="multipleTextA">15, 30, ... 105</span></div>
+              <div class="dots" id="lineA" aria-hidden="true"></div>
+            </div>
+            <div>
+              <div class="strip-name"><span id="multipleLabelB">35의 배수</span><span id="multipleTextB">35, 70, 105</span></div>
+              <div class="dots" id="lineB" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="number-line" id="numberLine" aria-hidden="true"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("gears");
+    const ctx = canvas.getContext("2d");
+    const stepBadge = document.getElementById("stepBadge");
+    const meetText = document.getElementById("meetText");
+    const playBtn = document.getElementById("playBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const backBtn = document.getElementById("backBtn");
+    const speedInput = document.getElementById("speed");
+    const gearAInput = document.getElementById("gearA");
+    const gearBInput = document.getElementById("gearB");
+    const titleA = document.getElementById("titleA");
+    const titleB = document.getElementById("titleB");
+    const subtitle = document.getElementById("subtitle");
+    const gcdText = document.getElementById("gcdText");
+    const lcmText = document.getElementById("lcmText");
+    const meshTotalText = document.getElementById("meshTotalText");
+    const resultExplain = document.getElementById("resultExplain");
+    const factorExplain = document.getElementById("factorExplain");
+    const divisorBox = document.getElementById("divisorBox");
+    const multipleLabelA = document.getElementById("multipleLabelA");
+    const multipleLabelB = document.getElementById("multipleLabelB");
+    const multipleTextA = document.getElementById("multipleTextA");
+    const multipleTextB = document.getElementById("multipleTextB");
+    const lineA = document.getElementById("lineA");
+    const lineB = document.getElementById("lineB");
+    const numberLine = document.getElementById("numberLine");
+    let teethA = 15;
+    let teethB = 35;
+    let gcdValue = 5;
+    let totalMeet = 105;
+    let step = 0;
+    let playing = false;
+    let lastTime = 0;
+    let pulse = 0;
+
+    function gcd(a, b) {
+      while (b !== 0) {
+        const next = a % b;
+        a = b;
+        b = next;
+      }
+      return Math.abs(a);
+    }
+
+    function getDivisors(a, b) {
+      const limit = Math.min(a, b);
+      const divisors = [];
+      for (let i = 1; i <= limit; i += 1) {
+        if (a % i === 0 && b % i === 0) divisors.push(i);
+      }
+      return divisors;
+    }
+
+    function clampTeeth(value) {
+      const number = Number.parseInt(value, 10);
+      if (Number.isNaN(number)) return 2;
+      return Math.max(2, Math.min(60, number));
+    }
+
+    function formatMultiples(base, limit) {
+      const values = [];
+      for (let value = base; value <= limit; value += base) values.push(value);
+      if (values.length <= 5) return values.join(", ");
+      return `${values.slice(0, 3).join(", ")}, ... ${limit}`;
+    }
+
+    function primeFactorText(n) {
+      const factors = [];
+      let value = n;
+      for (let p = 2; p <= value; p += 1) {
+        while (value % p === 0) {
+          factors.push(p);
+          value /= p;
+        }
+      }
+      return factors.join(" × ");
+    }
+
+    function makeDots(target, base, otherBase) {
+      target.innerHTML = "";
+      const dotCount = Math.min(totalMeet, 72);
+      target.style.setProperty("--dot-count", dotCount);
+      for (let i = 1; i <= dotCount; i += 1) {
+        const start = Math.floor((totalMeet * (i - 1)) / dotCount) + 1;
+        const end = Math.floor((totalMeet * i) / dotCount);
+        const hasBase = Math.ceil(start / base) * base <= end;
+        const hasOtherBase = Math.ceil(start / otherBase) * otherBase <= end;
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        if (hasBase) dot.classList.add(base === teethA ? "on15" : "on35");
+        if (hasBase && hasOtherBase && end === totalMeet) dot.className = "dot both";
+        target.append(dot);
+      }
+    }
+
+    function updatePanels() {
+      titleA.textContent = teethA;
+      titleB.textContent = teethB;
+      subtitle.textContent = `두 톱니바퀴가 한 칸씩 맞물려 돌 때, 둘 다 출발 표시가 다시 위로 오는 첫 순간은 ${totalMeet}번 맞물린 뒤입니다. 이 첫 만남이 최소공배수입니다.`;
+      gcdText.textContent = `gcd(${teethA}, ${teethB}) = ${gcdValue}`;
+      lcmText.textContent = `lcm(${teethA}, ${teethB}) = ${totalMeet}`;
+      meshTotalText.textContent = `맞물림 ${totalMeet}회`;
+      resultExplain.textContent = `${teethA}와 ${teethB}를 모두 나누는 가장 큰 수는 ${gcdValue}입니다. 두 수의 배수가 처음으로 겹치는 수는 ${totalMeet}입니다.`;
+      factorExplain.textContent = `${teethA} = ${primeFactorText(teethA)}, ${teethB} = ${primeFactorText(teethB)} 이므로 함께 들어 있는 가장 큰 묶음은 ${gcdValue}입니다.`;
+      multipleLabelA.textContent = `${teethA}의 배수`;
+      multipleLabelB.textContent = `${teethB}의 배수`;
+      multipleTextA.textContent = formatMultiples(teethA, totalMeet);
+      multipleTextB.textContent = formatMultiples(teethB, totalMeet);
+
+      divisorBox.innerHTML = "";
+      for (const value of getDivisors(teethA, teethB)) {
+        const chip = document.createElement("span");
+        chip.className = value === gcdValue ? "chip answer" : "chip";
+        chip.textContent = value;
+        divisorBox.append(chip);
+      }
+
+      makeDots(lineA, teethA, teethB);
+      makeDots(lineB, teethB, teethA);
+
+      numberLine.innerHTML = "";
+      const marks = [];
+      const markCount = Math.min(5, Math.max(2, Math.floor(totalMeet / Math.min(teethA, teethB))));
+      for (let i = 1; i <= markCount; i += 1) {
+        marks.push(Math.round((totalMeet * i) / markCount));
+      }
+      for (const value of marks) {
+        const span = document.createElement("span");
+        span.textContent = value;
+        numberLine.append(span);
+      }
+    }
+
+    function applyTeethChange(force = false) {
+      if (!force && (gearAInput.value === "" || gearBInput.value === "")) return;
+      teethA = clampTeeth(gearAInput.value);
+      teethB = clampTeeth(gearBInput.value);
+      gearAInput.value = teethA;
+      gearBInput.value = teethB;
+      gcdValue = gcd(teethA, teethB);
+      totalMeet = (teethA * teethB) / gcdValue;
+      step = 0;
+      playing = false;
+      playBtn.textContent = "재생";
+      lastTime = 0;
+      updatePanels();
+      render();
+    }
+
+    function pointAt(angle, radius) {
+      return {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius
+      };
+    }
+
+    function drawGear(cx, cy, pitchRadius, teeth, angle, fill, stroke, label, phase) {
+      const toothDepth = Math.max(10, Math.min(18, pitchRadius * 0.16));
+      const root = Math.max(14, pitchRadius - toothDepth * 0.55);
+      const inner = Math.max(18, pitchRadius * 0.46);
+      const toothOuter = pitchRadius + toothDepth;
+      const toothRoot = Math.max(12, pitchRadius - toothDepth);
+      const halfPitch = Math.PI / teeth;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      ctx.save();
+      ctx.shadowColor = "rgba(32, 35, 31, 0.22)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 9;
+      ctx.beginPath();
+      for (let i = 0; i < teeth; i += 1) {
+        const center = (Math.PI * 2 * i) / teeth;
+        const valleyA = center - halfPitch * 0.94;
+        const flankA = center - halfPitch * 0.46;
+        const crownA = center - halfPitch * 0.18;
+        const crownB = center + halfPitch * 0.18;
+        const flankB = center + halfPitch * 0.46;
+        const valleyB = center + halfPitch * 0.94;
+        const p0 = pointAt(valleyA, toothRoot);
+        const p1 = pointAt(flankA, pitchRadius);
+        const p2 = pointAt(crownA, toothOuter);
+        const p3 = pointAt(crownB, toothOuter);
+        const p4 = pointAt(flankB, pitchRadius);
+        const p5 = pointAt(valleyB, toothRoot);
+        if (i === 0) ctx.moveTo(p0.x, p0.y);
+        else ctx.lineTo(p0.x, p0.y);
+        ctx.quadraticCurveTo(p1.x, p1.y, p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.quadraticCurveTo(p4.x, p4.y, p5.x, p5.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 3;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, root, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      for (let i = 0; i < 6; i += 1) {
+        const a = (Math.PI * 2 * i) / 6 + phase;
+        ctx.save();
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.roundRect(pitchRadius * 0.15, -pitchRadius * 0.045, pitchRadius * 0.52, pitchRadius * 0.09, pitchRadius * 0.04);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.62)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(32, 35, 31, 0.12)";
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, inner, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(32, 35, 31, 0.18)";
+      ctx.stroke();
+
+      for (let i = 0; i < teeth; i += 1) {
+        const a = (Math.PI * 2 * i) / teeth;
+        const r = pitchRadius * 0.74;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r, Math.sin(a) * r, Math.max(2.5, pitchRadius * 0.022), 0, Math.PI * 2);
+        ctx.fillStyle = i === 0 ? "#bf4b47" : "rgba(32, 35, 31, 0.26)";
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -pitchRadius * 0.9);
+      ctx.strokeStyle = "#bf4b47";
+      ctx.lineWidth = Math.max(4, pitchRadius * 0.032);
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.rotate(-angle);
+      ctx.fillStyle = "#20231f";
+      ctx.font = `900 ${Math.max(20, Math.min(34, pitchRadius * 0.24))}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, 0, 0);
+      ctx.font = `800 ${Math.max(12, Math.min(18, pitchRadius * 0.13))}px sans-serif`;
+      ctx.fillStyle = "#5d665e";
+      ctx.fillText(`${teeth}개 톱니`, 0, Math.max(26, pitchRadius * 0.27));
+      ctx.restore();
+    }
+
+    function drawToothPath(cx, cy, pitchRadius, teeth, angle, color) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.28;
+      for (let i = 0; i < teeth; i += 1) {
+        const a = (Math.PI * 2 * i) / teeth;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * pitchRadius * 0.96, Math.sin(a) * pitchRadius * 0.96);
+        ctx.lineTo(Math.cos(a) * pitchRadius * 1.12, Math.sin(a) * pitchRadius * 1.12);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawMarker(x, y, text, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(x - 86, y - 19, 172, 38, 8);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "800 17px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x, y + 1);
+      ctx.restore();
+    }
+
+    function drawContact(x, y, active) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.strokeStyle = active ? "#bf4b47" : "rgba(32, 35, 31, 0.35)";
+      ctx.fillStyle = active ? "rgba(191, 75, 71, 0.16)" : "rgba(32, 35, 31, 0.08)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, active ? 27 + Math.sin(pulse) * 3 : 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-20, 0);
+      ctx.lineTo(20, 0);
+      ctx.moveTo(0, -20);
+      ctx.lineTo(0, 20);
+      ctx.stroke();
+      ctx.fillStyle = active ? "#bf4b47" : "#5d665e";
+      ctx.font = "900 15px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("맞물림", 0, 47);
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const moduleSize = Math.min(6.4, 230 / Math.max(teethA, teethB), 560 / (teethA + teethB));
+      const r1 = Math.max(54, teethA * moduleSize);
+      const r2 = Math.max(54, teethB * moduleSize);
+      const centerDistance = r1 + r2;
+      const cx1 = 480 - centerDistance / 2;
+      const cy = 342;
+      const cx2 = cx1 + centerDistance;
+      const angle15 = -step * Math.PI * 2 / teethA;
+      const angle35 = step * Math.PI * 2 / teethB;
+      const roundedStep = Math.floor(step);
+      const isMeet = Math.abs(step - totalMeet) < 0.001 || step === 0;
+      const contactX = cx1 + r1;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(32, 35, 31, 0.15)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 9]);
+      ctx.beginPath();
+      ctx.moveTo(cx1, 54);
+      ctx.lineTo(cx1, 622);
+      ctx.moveTo(cx2, 54);
+      ctx.lineTo(cx2, 622);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(32, 35, 31, 0.16)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7, 8]);
+      ctx.beginPath();
+      ctx.arc(cx1, cy, r1, 0, Math.PI * 2);
+      ctx.arc(cx2, cy, r2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      drawToothPath(cx1, cy, r1, teethA, angle15, "#3267a8");
+      drawToothPath(cx2, cy, r2, teethB, angle35, "#c28a26");
+      drawGear(cx1, cy, r1, teethA, angle15, "#dfeaf8", "#3267a8", String(teethA), 0.08);
+      drawGear(cx2, cy, r2, teethB, angle35, "#f7ead3", "#c28a26", String(teethB), -0.04);
+      drawContact(contactX, cy, playing);
+
+      drawMarker(cx1, 74, "출발 표시", "#3267a8");
+      drawMarker(cx2, 74, "출발 표시", "#c28a26");
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(47, 125, 91, 0.32)";
+      ctx.lineWidth = 14;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(150, 602);
+      ctx.lineTo(810, 602);
+      ctx.stroke();
+      ctx.strokeStyle = "#2f7d5b";
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.moveTo(150, 602);
+      ctx.lineTo(150 + 660 * (step / totalMeet), 602);
+      ctx.stroke();
+      ctx.fillStyle = "#20231f";
+      ctx.font = "900 18px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${Math.round((step / totalMeet) * 100)}%`, 480, 592);
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = isMeet ? "#bf4b47" : "#5d665e";
+      ctx.font = "900 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(isMeet && step > 0 ? "딱! 둘 다 원래 자리" : "서로 반대 방향으로 맞물려 회전", canvas.width / 2, 650);
+      ctx.restore();
+
+      stepBadge.textContent = `맞물림 ${roundedStep}회`;
+      if (step >= totalMeet) {
+        meetText.textContent = `${totalMeet}회째, 처음으로 동시에 원래 자리`;
+      } else if (step === 0) {
+        meetText.textContent = "출발점에서 함께 시작";
+      } else {
+        const left = totalMeet - roundedStep;
+        meetText.textContent = `${left}회 더 맞물리면 첫 만남`;
+      }
+    }
+
+    function move(delta) {
+      step = Math.max(0, Math.min(totalMeet, step + delta));
+      render();
+      if (step === totalMeet) {
+        playing = false;
+        playBtn.textContent = "재생";
+      }
+    }
+
+    function tick(time) {
+      if (!playing) return;
+      const speed = Number(speedInput.value);
+      if (!lastTime) lastTime = time;
+      const delta = Math.min(64, time - lastTime);
+      lastTime = time;
+      pulse += delta / 90;
+      step = Math.min(totalMeet, step + delta * (0.0045 + speed * 0.0028));
+      render();
+      if (step >= totalMeet) {
+        step = totalMeet;
+        playing = false;
+        playBtn.textContent = "재생";
+        render();
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (step >= totalMeet) step = 0;
+      playing = !playing;
+      playBtn.textContent = playing ? "정지" : "재생";
+      lastTime = 0;
+      render();
+      if (playing) requestAnimationFrame(tick);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      step = 0;
+      playing = false;
+      playBtn.textContent = "재생";
+      render();
+    });
+
+    nextBtn.addEventListener("click", () => move(1));
+    backBtn.addEventListener("click", () => move(-1));
+    gearAInput.addEventListener("input", () => applyTeethChange(false));
+    gearBInput.addEventListener("input", () => applyTeethChange(false));
+    gearAInput.addEventListener("blur", () => applyTeethChange(true));
+    gearBInput.addEventListener("blur", () => applyTeethChange(true));
+
+    updatePanels();
+    render();
+  </script>
+</body>
+</html>

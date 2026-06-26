@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Math Visual Lab</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --ink: #1e2430;
+      --muted: #647084;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --blue: #2f6fd6;
+      --green: #168a7a;
+      --gold: #c28a26;
+      --shadow: 0 18px 38px rgba(31, 36, 48, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(246, 248, 251, 0.98)),
+        radial-gradient(circle at 14% 12%, rgba(47, 111, 214, 0.14), transparent 32%),
+        radial-gradient(circle at 88% 10%, rgba(22, 138, 122, 0.13), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 44px;
+    }
+
+    header {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 9vw, 72px);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: clamp(16px, 3.8vw, 19px);
+      line-height: 1.65;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    a.card {
+      display: grid;
+      gap: 14px;
+      min-height: 220px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      color: inherit;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a.card:focus-visible {
+      outline: 3px solid rgba(47, 111, 214, 0.3);
+      outline-offset: 3px;
+    }
+
+    .icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #edf4ff;
+      color: var(--blue);
+      font-size: 30px;
+      font-weight: 950;
+    }
+
+    .card:nth-child(2) .icon {
+      background: #eef8f6;
+      color: var(--green);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(22px, 5vw, 30px);
+      line-height: 1.15;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.58;
+    }
+
+    .tag {
+      align-self: end;
+      display: inline-flex;
+      width: fit-content;
+      min-height: 34px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f7f9fc;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 680px) {
+      main {
+        width: min(100% - 20px, 980px);
+        padding-top: 22px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      a.card {
+        min-height: 0;
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Math Visual Lab</h1>
+      <p class="subtitle">초등 수학 개념을 움직이고 비교하며 보는 자료실입니다. 휴대폰, 태블릿, 컴퓨터에서 바로 열 수 있게 구성했습니다.</p>
+    </header>
+
+    <section class="grid" aria-label="수학 시각화 자료 목록">
+      <a class="card" href="./약수배수/">
+        <span class="icon">×</span>
+        <h2>GearSync</h2>
+        <p>톱니바퀴가 맞물려 돌며 최대공약수와 최소공배수를 보여줍니다.</p>
+        <span class="tag">약수와 배수</span>
+      </a>
+
+      <a class="card" href="./분수/">
+        <span class="icon">½</span>
+        <h2>Fraction Studio</h2>
+        <p>원 조각, 막대, 100칸 격자로 분수와 약분, 소수, 백분율을 확인합니다.</p>
+        <span class="tag">분수</span>
+      </a>
+    </section>
+
+    <footer>
+      자료를 추가하면 이 첫 화면에 카드만 더 붙이면 됩니다.
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fraction Studio: Visual Fraction Lab</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --ink: #1f2430;
+      --muted: #647084;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --blue: #2f6fd6;
+      --teal: #168a7a;
+      --coral: #d45b53;
+      --yellow: #d69a26;
+      --shadow: 0 18px 38px rgba(31, 36, 48, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(246, 248, 251, 0.98)),
+        radial-gradient(circle at 12% 12%, rgba(47, 111, 214, 0.13), transparent 32%),
+        radial-gradient(circle at 88% 8%, rgba(22, 138, 122, 0.13), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    header {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.04;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.62;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      overflow: hidden;
+    }
+
+    .stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .fraction-readout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-weight: 900;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #edf4ff;
+      color: var(--blue);
+      white-space: nowrap;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7f9fc;
+    }
+
+    .mode-tabs button,
+    .quick button {
+      min-height: 38px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 0 12px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .mode-tabs button.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .visual-area {
+      min-height: 520px;
+      padding: 22px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(90deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    .visual-card {
+      width: min(100%, 680px);
+      min-height: 430px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 20px;
+    }
+
+    .pie {
+      width: min(76vw, 360px);
+      max-width: 100%;
+      aspect-ratio: 1;
+    }
+
+    .bar-model {
+      width: min(100%, 620px);
+      display: grid;
+      gap: 14px;
+    }
+
+    .fraction-bar {
+      display: grid;
+      grid-template-columns: repeat(var(--parts), minmax(0, 1fr));
+      gap: 4px;
+      padding: 5px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .bar-part {
+      min-height: 78px;
+      border-radius: 5px;
+      background: #edf1f6;
+      border: 1px solid #d8e0ea;
+    }
+
+    .bar-part.filled {
+      background: linear-gradient(180deg, #77a7f5, #2f6fd6);
+      border-color: rgba(47, 111, 214, 0.5);
+    }
+
+    .hundred-grid {
+      width: min(82vw, 390px);
+      max-width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      padding: 6px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .cell {
+      border-radius: 4px;
+      background: #edf1f6;
+      border: 1px solid #d8e0ea;
+    }
+
+    .cell.filled {
+      background: linear-gradient(180deg, #54cabd, #168a7a);
+      border-color: rgba(22, 138, 122, 0.45);
+    }
+
+    .caption {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel + .panel {
+      margin-top: 18px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .sliders {
+      display: grid;
+      gap: 16px;
+    }
+
+    label.control {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .quick button {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .facts {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .facts div {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .facts dt {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .facts dd {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-bar {
+      display: grid;
+      grid-template-columns: repeat(var(--parts), minmax(0, 1fr));
+      gap: 2px;
+      padding: 3px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .mini-bar span {
+      border-radius: 4px;
+      background: #edf1f6;
+    }
+
+    .mini-bar span.on {
+      background: var(--yellow);
+    }
+
+    .equal {
+      color: var(--teal);
+      font-weight: 950;
+      font-size: 20px;
+    }
+
+    .note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .visual-area {
+        min-height: 440px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 20px, 1180px);
+        padding-top: 18px;
+      }
+
+      .stage-top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .mode-tabs {
+        width: 100%;
+      }
+
+      .mode-tabs button {
+        flex: 1;
+        padding: 0 8px;
+      }
+
+      .visual-area {
+        min-height: 380px;
+        padding: 14px;
+      }
+
+      .visual-card {
+        min-height: 330px;
+      }
+
+      .bar-part {
+        min-height: 52px;
+      }
+
+      .compare-row {
+        grid-template-columns: 1fr;
+      }
+
+      .equal {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Fraction Studio</h1>
+      <p class="subtitle">조각, 막대, 100칸 격자로 분수를 만져보는 시각화 자료입니다. 분자와 분모를 바꾸면 약분, 소수, 백분율이 함께 바뀝니다.</p>
+    </header>
+
+    <section class="layout" aria-label="분수 시각화 자료">
+      <div class="stage">
+        <div class="stage-top">
+          <div class="fraction-readout">
+            <span class="badge" id="fractionBadge">3 / 8</span>
+            <span id="summary">전체를 8개로 나누어 3개를 색칠했습니다.</span>
+          </div>
+          <div class="mode-tabs" aria-label="보기 방식">
+            <button type="button" class="active" data-mode="pie">Circle</button>
+            <button type="button" data-mode="bar">Bar</button>
+            <button type="button" data-mode="grid">Grid</button>
+          </div>
+        </div>
+        <div class="visual-area">
+          <div class="visual-card" id="visual"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="panel">
+          <h2>분수 만들기</h2>
+          <div class="sliders">
+            <label class="control">
+              <span class="control-head"><span>분자</span><strong id="numValue">3</strong></span>
+              <input id="numerator" type="range" min="0" max="8" value="3">
+            </label>
+            <label class="control">
+              <span class="control-head"><span>분모</span><strong id="denValue">8</strong></span>
+              <input id="denominator" type="range" min="1" max="20" value="8">
+            </label>
+          </div>
+          <div class="quick" aria-label="빠른 예시">
+            <button type="button" data-frac="1/2">1/2</button>
+            <button type="button" data-frac="3/4">3/4</button>
+            <button type="button" data-frac="2/5">2/5</button>
+            <button type="button" data-frac="6/8">6/8</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>읽어보기</h2>
+          <dl class="facts">
+            <div>
+              <dt>현재 분수</dt>
+              <dd id="fractionText">3/8</dd>
+            </div>
+            <div>
+              <dt>약분하면</dt>
+              <dd id="reducedText">3/8</dd>
+            </div>
+            <div>
+              <dt>소수와 백분율</dt>
+              <dd id="decimalText">0.375 = 37.5%</dd>
+            </div>
+          </dl>
+          <p class="note" id="explain">분모는 전체를 몇 조각으로 나누는지, 분자는 그중 몇 조각을 고르는지 나타냅니다.</p>
+        </div>
+
+        <div class="panel">
+          <h2>같은 크기 비교</h2>
+          <div class="compare-row">
+            <div class="mini-bar" id="miniOriginal"></div>
+            <div class="equal">=</div>
+            <div class="mini-bar" id="miniReduced"></div>
+          </div>
+          <p class="note" id="compareText">3/8과 3/8은 같은 크기입니다.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const visual = document.getElementById("visual");
+    const fractionBadge = document.getElementById("fractionBadge");
+    const summary = document.getElementById("summary");
+    const numeratorInput = document.getElementById("numerator");
+    const denominatorInput = document.getElementById("denominator");
+    const numValue = document.getElementById("numValue");
+    const denValue = document.getElementById("denValue");
+    const fractionText = document.getElementById("fractionText");
+    const reducedText = document.getElementById("reducedText");
+    const decimalText = document.getElementById("decimalText");
+    const explain = document.getElementById("explain");
+    const miniOriginal = document.getElementById("miniOriginal");
+    const miniReduced = document.getElementById("miniReduced");
+    const compareText = document.getElementById("compareText");
+    const modeButtons = Array.from(document.querySelectorAll("[data-mode]"));
+    const quickButtons = Array.from(document.querySelectorAll("[data-frac]"));
+    let mode = "pie";
+    let numerator = 3;
+    let denominator = 8;
+
+    function gcd(a, b) {
+      while (b !== 0) {
+        const next = a % b;
+        a = b;
+        b = next;
+      }
+      return Math.abs(a);
+    }
+
+    function polar(cx, cy, radius, angle) {
+      return {
+        x: cx + Math.cos(angle) * radius,
+        y: cy + Math.sin(angle) * radius
+      };
+    }
+
+    function slicePath(index, total) {
+      const cx = 180;
+      const cy = 180;
+      const radius = 160;
+      const start = -Math.PI / 2 + (Math.PI * 2 * index) / total;
+      const end = -Math.PI / 2 + (Math.PI * 2 * (index + 1)) / total;
+      const p1 = polar(cx, cy, radius, start);
+      const p2 = polar(cx, cy, radius, end);
+      const large = end - start > Math.PI ? 1 : 0;
+      return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${radius} ${radius} 0 ${large} 1 ${p2.x} ${p2.y} Z`;
+    }
+
+    function makePie() {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "pie");
+      svg.setAttribute("viewBox", "0 0 360 360");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${denominator}개 중 ${numerator}개가 색칠된 원`);
+      for (let i = 0; i < denominator; i += 1) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", slicePath(i, denominator));
+        path.setAttribute("fill", i < numerator ? "#2f6fd6" : "#edf1f6");
+        path.setAttribute("stroke", "#ffffff");
+        path.setAttribute("stroke-width", "3");
+        svg.append(path);
+      }
+      const rim = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      rim.setAttribute("cx", "180");
+      rim.setAttribute("cy", "180");
+      rim.setAttribute("r", "160");
+      rim.setAttribute("fill", "none");
+      rim.setAttribute("stroke", "#1f2430");
+      rim.setAttribute("stroke-width", "4");
+      svg.append(rim);
+      return svg;
+    }
+
+    function makeBar() {
+      const wrapper = document.createElement("div");
+      wrapper.className = "bar-model";
+      const bar = document.createElement("div");
+      bar.className = "fraction-bar";
+      bar.style.setProperty("--parts", denominator);
+      for (let i = 0; i < denominator; i += 1) {
+        const part = document.createElement("span");
+        part.className = i < numerator ? "bar-part filled" : "bar-part";
+        bar.append(part);
+      }
+      wrapper.append(bar);
+      return wrapper;
+    }
+
+    function makeGrid() {
+      const grid = document.createElement("div");
+      grid.className = "hundred-grid";
+      const filled = Math.round((numerator / denominator) * 100);
+      for (let i = 0; i < 100; i += 1) {
+        const cell = document.createElement("span");
+        cell.className = i < filled ? "cell filled" : "cell";
+        grid.append(cell);
+      }
+      return grid;
+    }
+
+    function makeMiniBar(target, top, bottom, colorClass) {
+      target.innerHTML = "";
+      target.style.setProperty("--parts", bottom);
+      for (let i = 0; i < bottom; i += 1) {
+        const span = document.createElement("span");
+        if (i < top) span.className = colorClass;
+        target.append(span);
+      }
+    }
+
+    function renderVisual() {
+      visual.innerHTML = "";
+      if (mode === "pie") visual.append(makePie());
+      if (mode === "bar") visual.append(makeBar());
+      if (mode === "grid") visual.append(makeGrid());
+      const caption = document.createElement("p");
+      caption.className = "caption";
+      caption.textContent = mode === "grid"
+        ? `100칸 중 약 ${Math.round((numerator / denominator) * 100)}칸이 색칠됩니다.`
+        : `${denominator}등분 중 ${numerator}칸을 색칠했습니다.`;
+      visual.append(caption);
+    }
+
+    function render() {
+      denominator = Number(denominatorInput.value);
+      numerator = Math.min(Number(numeratorInput.value), denominator);
+      numeratorInput.max = denominator;
+      numeratorInput.value = numerator;
+      numValue.textContent = numerator;
+      denValue.textContent = denominator;
+
+      const divisor = gcd(numerator, denominator) || 1;
+      const reducedNum = numerator / divisor;
+      const reducedDen = denominator / divisor;
+      const decimal = numerator / denominator;
+      const percent = decimal * 100;
+      const percentText = Number.isInteger(percent) ? `${percent}%` : `${percent.toFixed(1)}%`;
+
+      fractionBadge.textContent = `${numerator} / ${denominator}`;
+      summary.textContent = `전체를 ${denominator}개로 나누어 ${numerator}개를 색칠했습니다.`;
+      fractionText.textContent = `${numerator}/${denominator}`;
+      reducedText.textContent = `${reducedNum}/${reducedDen}`;
+      decimalText.textContent = `${decimal.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")} = ${percentText}`;
+      explain.textContent = divisor > 1
+        ? `${numerator}/${denominator}은 분자와 분모를 ${divisor}로 나누면 ${reducedNum}/${reducedDen}이 됩니다.`
+        : `${numerator}/${denominator}은 더 이상 같은 수로 나누어 줄일 수 없는 분수입니다.`;
+      compareText.textContent = `${numerator}/${denominator}과 ${reducedNum}/${reducedDen}은 같은 크기입니다.`;
+
+      makeMiniBar(miniOriginal, numerator, denominator, "on");
+      makeMiniBar(miniReduced, reducedNum, reducedDen, "on");
+      renderVisual();
+    }
+
+    numeratorInput.addEventListener("input", render);
+    denominatorInput.addEventListener("input", render);
+
+    for (const button of modeButtons) {
+      button.addEventListener("click", () => {
+        mode = button.dataset.mode;
+        for (const item of modeButtons) item.classList.toggle("active", item === button);
+        renderVisual();
+      });
+    }
+
+    for (const button of quickButtons) {
+      button.addEventListener("click", () => {
+        const [num, den] = button.dataset.frac.split("/").map(Number);
+        denominatorInput.value = den;
+        numeratorInput.value = num;
+        render();
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
