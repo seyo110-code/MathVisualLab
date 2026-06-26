@@ -189,6 +189,69 @@
       border-color: rgba(47, 111, 214, 0.5);
     }
 
+    .common-model {
+      width: min(100%, 660px);
+      display: grid;
+      gap: 18px;
+    }
+
+    .common-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .common-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .common-label strong {
+      color: var(--ink);
+    }
+
+    .common-bar {
+      display: grid;
+      grid-template-columns: repeat(var(--parts), minmax(0, 1fr));
+      gap: 0;
+      padding: 5px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .common-bar span {
+      min-height: 58px;
+      border-radius: 4px;
+      background: #edf1f6;
+      border: 1px solid #d8e0ea;
+    }
+
+    .common-bar span.first {
+      background: linear-gradient(180deg, #77a7f5, #2f6fd6);
+      border-color: rgba(47, 111, 214, 0.5);
+    }
+
+    .common-bar span.second {
+      background: linear-gradient(180deg, #f3bd62, #d69a26);
+      border-color: rgba(214, 154, 38, 0.48);
+    }
+
+    .common-answer {
+      margin: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      color: var(--ink);
+      font-weight: 900;
+      line-height: 1.55;
+      text-align: center;
+    }
+
     .hundred-grid {
       width: min(82vw, 390px);
       max-width: 100%;
@@ -377,7 +440,8 @@
         min-height: 330px;
       }
 
-      .bar-part {
+      .bar-part,
+      .common-bar span {
         min-height: 52px;
       }
 
@@ -409,6 +473,7 @@
             <button type="button" class="active" data-mode="pie">Circle</button>
             <button type="button" data-mode="bar">Bar</button>
             <button type="button" data-mode="grid">Grid</button>
+            <button type="button" data-mode="common">Common</button>
           </div>
         </div>
         <div class="visual-area">
@@ -435,6 +500,21 @@
             <button type="button" data-frac="2/5">2/5</button>
             <button type="button" data-frac="6/8">6/8</button>
           </div>
+        </div>
+
+        <div class="panel">
+          <h2>통분 비교</h2>
+          <div class="sliders">
+            <label class="control">
+              <span class="control-head"><span>두 번째 분자</span><strong id="compareNumValue">1</strong></span>
+              <input id="compareNumerator" type="range" min="0" max="3" value="1">
+            </label>
+            <label class="control">
+              <span class="control-head"><span>두 번째 분모</span><strong id="compareDenValue">3</strong></span>
+              <input id="compareDenominator" type="range" min="1" max="20" value="3">
+            </label>
+          </div>
+          <p class="note" id="commonExplain">3/8과 1/3을 같은 분모로 바꾸어 비교합니다.</p>
         </div>
 
         <div class="panel">
@@ -480,6 +560,11 @@
     const fractionText = document.getElementById("fractionText");
     const reducedText = document.getElementById("reducedText");
     const decimalText = document.getElementById("decimalText");
+    const compareNumeratorInput = document.getElementById("compareNumerator");
+    const compareDenominatorInput = document.getElementById("compareDenominator");
+    const compareNumValue = document.getElementById("compareNumValue");
+    const compareDenValue = document.getElementById("compareDenValue");
+    const commonExplain = document.getElementById("commonExplain");
     const explain = document.getElementById("explain");
     const miniOriginal = document.getElementById("miniOriginal");
     const miniReduced = document.getElementById("miniReduced");
@@ -489,6 +574,8 @@
     let mode = "pie";
     let numerator = 3;
     let denominator = 8;
+    let compareNumerator = 1;
+    let compareDenominator = 3;
 
     function gcd(a, b) {
       while (b !== 0) {
@@ -558,6 +645,49 @@
       return wrapper;
     }
 
+    function lcm(a, b) {
+      return (a * b) / gcd(a, b);
+    }
+
+    function makeCommonBar(label, originalText, convertedText, filled, total, className) {
+      const row = document.createElement("div");
+      row.className = "common-row";
+      const title = document.createElement("div");
+      title.className = "common-label";
+      title.innerHTML = `<span>${label}: <strong>${originalText}</strong></span><span>${convertedText}</span>`;
+      const bar = document.createElement("div");
+      bar.className = "common-bar";
+      bar.style.setProperty("--parts", total);
+      for (let i = 0; i < total; i += 1) {
+        const cell = document.createElement("span");
+        if (i < filled) cell.className = className;
+        bar.append(cell);
+      }
+      row.append(title, bar);
+      return row;
+    }
+
+    function makeCommon() {
+      const commonDen = lcm(denominator, compareDenominator);
+      const firstScale = commonDen / denominator;
+      const secondScale = commonDen / compareDenominator;
+      const firstNum = numerator * firstScale;
+      const secondNum = compareNumerator * secondScale;
+      const wrapper = document.createElement("div");
+      wrapper.className = "common-model";
+      wrapper.append(
+        makeCommonBar("첫 번째", `${numerator}/${denominator}`, `${firstNum}/${commonDen}`, firstNum, commonDen, "first"),
+        makeCommonBar("두 번째", `${compareNumerator}/${compareDenominator}`, `${secondNum}/${commonDen}`, secondNum, commonDen, "second")
+      );
+      const answer = document.createElement("p");
+      answer.className = "common-answer";
+      if (firstNum > secondNum) answer.textContent = `${firstNum}/${commonDen}이 더 크므로 ${numerator}/${denominator}이 더 큽니다.`;
+      else if (firstNum < secondNum) answer.textContent = `${secondNum}/${commonDen}이 더 크므로 ${compareNumerator}/${compareDenominator}이 더 큽니다.`;
+      else answer.textContent = `둘 다 ${firstNum}/${commonDen}이므로 같은 크기입니다.`;
+      wrapper.append(answer);
+      return wrapper;
+    }
+
     function makeGrid() {
       const grid = document.createElement("div");
       grid.className = "hundred-grid";
@@ -585,21 +715,33 @@
       if (mode === "pie") visual.append(makePie());
       if (mode === "bar") visual.append(makeBar());
       if (mode === "grid") visual.append(makeGrid());
+      if (mode === "common") visual.append(makeCommon());
       const caption = document.createElement("p");
       caption.className = "caption";
-      caption.textContent = mode === "grid"
-        ? `100칸 중 약 ${Math.round((numerator / denominator) * 100)}칸이 색칠됩니다.`
-        : `${denominator}등분 중 ${numerator}칸을 색칠했습니다.`;
+      if (mode === "grid") caption.textContent = `100칸 중 약 ${Math.round((numerator / denominator) * 100)}칸이 색칠됩니다.`;
+      else if (mode === "common") caption.textContent = `분모를 ${lcm(denominator, compareDenominator)}로 같게 만들면 색칠한 칸 수로 바로 비교할 수 있습니다.`;
+      else caption.textContent = `${denominator}등분 중 ${numerator}칸을 색칠했습니다.`;
       visual.append(caption);
     }
 
     function render() {
       denominator = Number(denominatorInput.value);
       numerator = Math.min(Number(numeratorInput.value), denominator);
+      compareDenominator = Number(compareDenominatorInput.value);
+      compareNumerator = Math.min(Number(compareNumeratorInput.value), compareDenominator);
       numeratorInput.max = denominator;
+      compareNumeratorInput.max = compareDenominator;
       numeratorInput.value = numerator;
+      compareNumeratorInput.value = compareNumerator;
       numValue.textContent = numerator;
       denValue.textContent = denominator;
+      compareNumValue.textContent = compareNumerator;
+      compareDenValue.textContent = compareDenominator;
+
+      const commonDen = lcm(denominator, compareDenominator);
+      const firstCommonNum = numerator * (commonDen / denominator);
+      const secondCommonNum = compareNumerator * (commonDen / compareDenominator);
+      commonExplain.textContent = `${numerator}/${denominator} = ${firstCommonNum}/${commonDen}, ${compareNumerator}/${compareDenominator} = ${secondCommonNum}/${commonDen}. 분모가 같아지면 분자만 보고 비교할 수 있습니다.`;
 
       const divisor = gcd(numerator, denominator) || 1;
       const reducedNum = numerator / divisor;
@@ -625,6 +767,8 @@
 
     numeratorInput.addEventListener("input", render);
     denominatorInput.addEventListener("input", render);
+    compareNumeratorInput.addEventListener("input", render);
+    compareDenominatorInput.addEventListener("input", render);
 
     for (const button of modeButtons) {
       button.addEventListener("click", () => {
