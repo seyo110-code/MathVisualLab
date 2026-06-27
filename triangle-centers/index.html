@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Triangle Centers Lab</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --ink: #1f2430;
+      --muted: #647084;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --blue: #2f6fd6;
+      --teal: #168a7a;
+      --coral: #d45b53;
+      --gold: #c28a26;
+      --violet: #7257c9;
+      --gray: #596579;
+      --shadow: 0 18px 38px rgba(31, 36, 48, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(246, 248, 251, 0.98)),
+        radial-gradient(circle at 12% 12%, rgba(47, 111, 214, 0.13), transparent 32%),
+        radial-gradient(circle at 88% 10%, rgba(114, 87, 201, 0.12), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    header {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 22px;
+    }
+
+    .home-link {
+      width: fit-content;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.04;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.62;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .stage { overflow: hidden; }
+
+    .stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .readout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-weight: 900;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #edf4ff;
+      color: var(--blue);
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .canvas-wrap {
+      min-height: 560px;
+      padding: 16px;
+      background:
+        linear-gradient(90deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px);
+      background-size: 34px 34px;
+    }
+
+    svg {
+      width: 100%;
+      height: min(72vh, 620px);
+      min-height: 460px;
+      display: block;
+      touch-action: none;
+      overflow: visible;
+    }
+
+    .grid-line { stroke: rgba(31, 36, 48, 0.08); stroke-width: 1; }
+    .triangle { fill: rgba(47, 111, 214, 0.12); stroke: var(--ink); stroke-width: 3; }
+    .construction { fill: none; stroke-width: 2; stroke-dasharray: 8 7; opacity: 0.78; }
+    .circle-guide { fill: none; stroke-width: 2.5; opacity: 0.82; }
+    .excircle { stroke-dasharray: 9 7; opacity: 0.52; }
+    .vertex { fill: #fff; stroke: var(--ink); stroke-width: 4; cursor: grab; }
+    .vertex-label { fill: var(--ink); font-size: 18px; font-weight: 950; pointer-events: none; }
+    .center-point { stroke: #fff; stroke-width: 3; }
+    .center-label { fill: var(--ink); font-size: 15px; font-weight: 950; paint-order: stroke; stroke: #fff; stroke-width: 4px; pointer-events: none; }
+
+    .panel { padding: 18px; }
+    .panel + .panel { margin-top: 18px; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+
+    .toggles {
+      display: grid;
+      gap: 10px;
+    }
+
+    .toggle {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .toggle input { width: 18px; height: 18px; accent-color: var(--blue); }
+    .dot { width: 13px; height: 13px; border-radius: 50%; }
+
+    .facts {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .facts div {
+      display: grid;
+      gap: 5px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .facts dt { color: var(--muted); font-size: 14px; font-weight: 900; }
+    .facts dd { margin: 0; font-size: 18px; font-weight: 950; line-height: 1.35; }
+
+    .note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .canvas-wrap { min-height: 500px; }
+    }
+
+    @media (max-width: 560px) {
+      main { width: min(100% - 20px, 1180px); padding-top: 18px; }
+      .stage-top { align-items: stretch; flex-direction: column; }
+      .toolbar { justify-content: stretch; }
+      .toolbar button { flex: 1; padding: 0 8px; }
+      .canvas-wrap { min-height: 430px; padding: 10px; }
+      svg { min-height: 390px; height: 62vh; }
+      .toggle { grid-template-columns: auto 1fr; }
+      .toggle .dot { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <a class="home-link" href="../">Math Visual Lab</a>
+      <h1>Triangle Centers Lab</h1>
+      <p class="subtitle">삼각형의 5심을 드래그로 관찰하는 자료입니다. 꼭짓점을 움직이면 내심, 외심, 무게중심, 수심, 방심과 관련 원들이 실시간으로 바뀝니다.</p>
+    </header>
+
+    <section class="layout" aria-label="삼각형의 5심 시각화">
+      <div class="stage">
+        <div class="stage-top">
+          <div class="readout">
+            <span class="badge" id="typeBadge">예각삼각형</span>
+            <span id="statusText">꼭짓점을 끌어 삼각형을 바꿔보세요.</span>
+          </div>
+          <div class="toolbar">
+            <button type="button" id="presetAcute">예각</button>
+            <button type="button" id="presetRight">직각</button>
+            <button type="button" id="presetObtuse">둔각</button>
+            <button type="button" class="primary" id="resetBtn">처음</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <svg id="board" viewBox="0 0 760 560" role="img" aria-label="드래그 가능한 삼각형과 5심"></svg>
+        </div>
+      </div>
+
+      <aside>
+        <div class="panel">
+          <h2>표시할 중심</h2>
+          <div class="toggles" id="toggles"></div>
+        </div>
+
+        <div class="panel">
+          <h2>5심 읽기</h2>
+          <dl class="facts">
+            <div><dt>내심 I</dt><dd>세 각의 이등분선이 만나는 점, 세 변에서 같은 거리</dd></div>
+            <div><dt>외심 O</dt><dd>세 변의 수직이등분선이 만나는 점, 세 꼭짓점에서 같은 거리</dd></div>
+            <div><dt>무게중심 G</dt><dd>세 중선이 만나는 점, 꼭짓점에서 중선의 2:1 지점</dd></div>
+            <div><dt>수심 H</dt><dd>세 높이가 만나는 점</dd></div>
+            <div><dt>방심 E</dt><dd>한 변과 두 변의 연장선에 접하는 방접원의 중심</dd></div>
+          </dl>
+          <p class="note" id="insight">외심과 수심은 둔각삼각형에서 바깥으로 나갈 수 있습니다.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const svg = document.getElementById("board");
+    const toggles = document.getElementById("toggles");
+    const typeBadge = document.getElementById("typeBadge");
+    const statusText = document.getElementById("statusText");
+    const insight = document.getElementById("insight");
+    const ns = "http://www.w3.org/2000/svg";
+    const colors = {
+      incenter: "#2f6fd6",
+      circumcenter: "#168a7a",
+      centroid: "#d69a26",
+      orthocenter: "#d45b53",
+      excenter: "#7257c9"
+    };
+    const labels = {
+      incenter: "내심 I",
+      circumcenter: "외심 O",
+      centroid: "무게중심 G",
+      orthocenter: "수심 H",
+      excenter: "방심 E"
+    };
+    const state = {
+      points: [
+        { x: 180, y: 410 },
+        { x: 590, y: 390 },
+        { x: 355, y: 115 }
+      ],
+      visible: {
+        incenter: true,
+        circumcenter: true,
+        centroid: true,
+        orthocenter: true,
+        excenter: false
+      },
+      dragIndex: null
+    };
+
+    function el(name, attrs = {}) {
+      const node = document.createElementNS(ns, name);
+      for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+      return node;
+    }
+
+    function add(parent, name, attrs = {}) {
+      const node = el(name, attrs);
+      parent.append(node);
+      return node;
+    }
+
+    function dist(p, q) {
+      return Math.hypot(p.x - q.x, p.y - q.y);
+    }
+
+    function lineDistance(p, a, b) {
+      const area2 = Math.abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y));
+      return area2 / Math.max(1, dist(a, b));
+    }
+
+    function midpoint(p, q) {
+      return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    }
+
+    function weighted(points, weights) {
+      const sum = weights.reduce((a, b) => a + b, 0);
+      if (Math.abs(sum) < 0.001) return { x: 380, y: 280 };
+      return {
+        x: points.reduce((acc, p, i) => acc + p.x * weights[i], 0) / sum,
+        y: points.reduce((acc, p, i) => acc + p.y * weights[i], 0) / sum
+      };
+    }
+
+    function circumcenter(A, B, C) {
+      const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+      if (Math.abs(d) < 0.001) return { x: 380, y: 280 };
+      return {
+        x: ((A.x * A.x + A.y * A.y) * (B.y - C.y) + (B.x * B.x + B.y * B.y) * (C.y - A.y) + (C.x * C.x + C.y * C.y) * (A.y - B.y)) / d,
+        y: ((A.x * A.x + A.y * A.y) * (C.x - B.x) + (B.x * B.x + B.y * B.y) * (A.x - C.x) + (C.x * C.x + C.y * C.y) * (B.x - A.x)) / d
+      };
+    }
+
+    function triangleType(A, B, C) {
+      const sides = [dist(B, C), dist(C, A), dist(A, B)].sort((a, b) => a - b);
+      const lhs = sides[0] * sides[0] + sides[1] * sides[1];
+      const rhs = sides[2] * sides[2];
+      if (Math.abs(lhs - rhs) < 420) return "직각삼각형";
+      return lhs > rhs ? "예각삼각형" : "둔각삼각형";
+    }
+
+    function centers() {
+      const [A, B, C] = state.points;
+      const a = dist(B, C);
+      const b = dist(C, A);
+      const c = dist(A, B);
+      const I = weighted([A, B, C], [a, b, c]);
+      const O = circumcenter(A, B, C);
+      const G = { x: (A.x + B.x + C.x) / 3, y: (A.y + B.y + C.y) / 3 };
+      const H = { x: A.x + B.x + C.x - 2 * O.x, y: A.y + B.y + C.y - 2 * O.y };
+      const exA = weighted([A, B, C], [-a, b, c]);
+      const exB = weighted([A, B, C], [a, -b, c]);
+      const exC = weighted([A, B, C], [a, b, -c]);
+      return {
+        incenter: I,
+        circumcenter: O,
+        centroid: G,
+        orthocenter: H,
+        excenters: [exA, exB, exC],
+        inradius: lineDistance(I, A, B),
+        circumradius: dist(O, A),
+        exradii: [lineDistance(exA, B, C), lineDistance(exB, C, A), lineDistance(exC, A, B)],
+        mids: [midpoint(B, C), midpoint(C, A), midpoint(A, B)]
+      };
+    }
+
+    function pointText(p) {
+      return `${Math.round(p.x)}, ${Math.round(p.y)}`;
+    }
+
+    function drawGrid() {
+      const group = add(svg, "g");
+      for (let x = 40; x <= 720; x += 40) add(group, "line", { class: "grid-line", x1: x, y1: 30, x2: x, y2: 530 });
+      for (let y = 40; y <= 520; y += 40) add(group, "line", { class: "grid-line", x1: 30, y1: y, x2: 730, y2: y });
+    }
+
+    function drawLine(p, q, color, dash = true) {
+      add(svg, "line", {
+        class: "construction",
+        x1: p.x, y1: p.y, x2: q.x, y2: q.y,
+        stroke: color,
+        "stroke-dasharray": dash ? "8 7" : ""
+      });
+    }
+
+    function drawCircle(center, radius, color, extra = "") {
+      if (!Number.isFinite(radius) || radius > 1200) return;
+      add(svg, "circle", {
+        class: `circle-guide ${extra}`,
+        cx: center.x, cy: center.y, r: radius,
+        stroke: color
+      });
+    }
+
+    function drawCenter(key, p, label) {
+      add(svg, "circle", { class: "center-point", cx: p.x, cy: p.y, r: 8, fill: colors[key] });
+      add(svg, "text", { class: "center-label", x: p.x + 11, y: p.y - 11 }).textContent = label;
+    }
+
+    function draw() {
+      svg.innerHTML = "";
+      drawGrid();
+      const [A, B, C] = state.points;
+      const data = centers();
+      const type = triangleType(A, B, C);
+      typeBadge.textContent = type;
+      statusText.textContent = `A(${pointText(A)}), B(${pointText(B)}), C(${pointText(C)})`;
+      insight.textContent = type === "둔각삼각형"
+        ? "둔각삼각형에서는 외심과 수심이 삼각형 바깥으로 나가는 모습을 볼 수 있습니다."
+        : type === "직각삼각형"
+          ? "직각삼각형에서는 외심이 빗변의 중점에 놓입니다."
+          : "예각삼각형에서는 네 중심이 대체로 삼각형 안쪽에 모입니다. 방심은 항상 바깥쪽에 있습니다.";
+
+      if (state.visible.circumcenter) drawCircle(data.circumcenter, data.circumradius, colors.circumcenter);
+      if (state.visible.incenter) drawCircle(data.incenter, data.inradius, colors.incenter);
+      if (state.visible.excenter) data.excenters.forEach((p, i) => drawCircle(p, data.exradii[i], colors.excenter, "excircle"));
+
+      if (state.visible.centroid) {
+        drawLine(A, data.mids[0], colors.centroid);
+        drawLine(B, data.mids[1], colors.centroid);
+        drawLine(C, data.mids[2], colors.centroid);
+      }
+      if (state.visible.orthocenter) {
+        drawLine(A, data.orthocenter, colors.orthocenter);
+        drawLine(B, data.orthocenter, colors.orthocenter);
+        drawLine(C, data.orthocenter, colors.orthocenter);
+      }
+      if (state.visible.circumcenter) {
+        drawLine(data.circumcenter, A, colors.circumcenter);
+        drawLine(data.circumcenter, B, colors.circumcenter);
+        drawLine(data.circumcenter, C, colors.circumcenter);
+      }
+      if (state.visible.incenter) {
+        drawLine(data.incenter, A, colors.incenter);
+        drawLine(data.incenter, B, colors.incenter);
+        drawLine(data.incenter, C, colors.incenter);
+      }
+
+      add(svg, "polygon", {
+        class: "triangle",
+        points: `${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`
+      });
+
+      if (state.visible.incenter) drawCenter("incenter", data.incenter, "I");
+      if (state.visible.circumcenter) drawCenter("circumcenter", data.circumcenter, "O");
+      if (state.visible.centroid) drawCenter("centroid", data.centroid, "G");
+      if (state.visible.orthocenter) drawCenter("orthocenter", data.orthocenter, "H");
+      if (state.visible.excenter) data.excenters.forEach((p, i) => drawCenter("excenter", p, `E${i + 1}`));
+
+      [A, B, C].forEach((p, i) => {
+        add(svg, "circle", { class: "vertex", cx: p.x, cy: p.y, r: 13, "data-index": i });
+        add(svg, "text", { class: "vertex-label", x: p.x + 16, y: p.y + 5 }).textContent = ["A", "B", "C"][i];
+      });
+    }
+
+    function buildToggles() {
+      toggles.innerHTML = "";
+      for (const key of ["incenter", "circumcenter", "centroid", "orthocenter", "excenter"]) {
+        const label = document.createElement("label");
+        label.className = "toggle";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = state.visible[key];
+        input.addEventListener("change", () => {
+          state.visible[key] = input.checked;
+          draw();
+        });
+        const text = document.createElement("span");
+        text.textContent = labels[key];
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = colors[key];
+        label.append(input, text, dot);
+        toggles.append(label);
+      }
+    }
+
+    function svgPoint(event) {
+      const rect = svg.getBoundingClientRect();
+      return {
+        x: Math.max(35, Math.min(725, ((event.clientX - rect.left) / rect.width) * 760)),
+        y: Math.max(35, Math.min(525, ((event.clientY - rect.top) / rect.height) * 560))
+      };
+    }
+
+    svg.addEventListener("pointerdown", event => {
+      const target = event.target.closest(".vertex");
+      if (!target) return;
+      state.dragIndex = Number(target.dataset.index);
+      svg.setPointerCapture(event.pointerId);
+    });
+
+    svg.addEventListener("pointermove", event => {
+      if (state.dragIndex === null) return;
+      state.points[state.dragIndex] = svgPoint(event);
+      draw();
+    });
+
+    svg.addEventListener("pointerup", event => {
+      state.dragIndex = null;
+      try { svg.releasePointerCapture(event.pointerId); } catch (error) {}
+    });
+
+    svg.addEventListener("pointercancel", () => { state.dragIndex = null; });
+
+    function setPreset(points) {
+      state.points = points.map(p => ({ ...p }));
+      draw();
+    }
+
+    document.getElementById("presetAcute").addEventListener("click", () => setPreset([
+      { x: 180, y: 410 }, { x: 590, y: 390 }, { x: 355, y: 115 }
+    ]));
+    document.getElementById("presetRight").addEventListener("click", () => setPreset([
+      { x: 190, y: 420 }, { x: 590, y: 420 }, { x: 190, y: 130 }
+    ]));
+    document.getElementById("presetObtuse").addEventListener("click", () => setPreset([
+      { x: 130, y: 410 }, { x: 630, y: 390 }, { x: 250, y: 210 }
+    ]));
+    document.getElementById("resetBtn").addEventListener("click", () => setPreset([
+      { x: 180, y: 410 }, { x: 590, y: 390 }, { x: 355, y: 115 }
+    ]));
+
+    buildToggles();
+    draw();
+  </script>
+</body>
+</html>
