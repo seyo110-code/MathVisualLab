@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scale of Science</title>
+  <style>
+    :root {
+      --bg: #080b12;
+      --ink: #eef4ff;
+      --muted: #aebbd0;
+      --line: rgba(238, 244, 255, 0.16);
+      --panel: rgba(13, 18, 29, 0.86);
+      --cyan: #49d3d0;
+      --yellow: #f4c35b;
+      --rose: #f07a94;
+      --green: #72d687;
+      --blue: #76a9ff;
+      --violet: #b99cff;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 16%, rgba(73, 211, 208, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 72%, rgba(244, 195, 91, 0.12), transparent 26%),
+        linear-gradient(180deg, #070911 0%, #111827 58%, #090d15 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    a { color: inherit; }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 20px 0 26px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+    }
+
+    .topbar,
+    .control-strip {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(9, 13, 22, 0.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar {
+      min-height: 76px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand { display: grid; gap: 5px; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .mode-toggle {
+      min-height: 40px;
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(86px, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .mode-button,
+    .home-link {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .mode-button {
+      padding: 6px 10px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .mode-button[aria-pressed="true"] {
+      background: rgba(73, 211, 208, 0.18);
+      color: var(--ink);
+    }
+
+    .home-link {
+      min-height: 40px;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .stage {
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+    }
+
+    .visual-wrap,
+    .info {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .visual-wrap {
+      position: relative;
+      min-height: 560px;
+    }
+
+    .photo-scene {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(180deg, rgba(4, 7, 13, 0.06), rgba(4, 7, 13, 0.18)),
+        url("./assets/science-scale-atlas.png");
+      background-size: 400% 200%;
+      background-position: 0% 0%;
+      filter: saturate(1.08) contrast(1.05);
+      transform: scale(1.012);
+      transition: background-position 420ms ease, filter 260ms ease, opacity 260ms ease;
+    }
+
+    .visual-wrap[data-mode="model"] .photo-scene {
+      opacity: 0.28;
+      filter: saturate(0.72) contrast(0.85) blur(1.5px);
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease;
+    }
+
+    .visual-wrap[data-mode="model"] canvas { opacity: 1; }
+
+    .scale-badge,
+    .model-note {
+      position: absolute;
+      left: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: rgba(2, 6, 14, 0.68);
+      color: var(--muted);
+      font-weight: 900;
+      backdrop-filter: blur(12px);
+    }
+
+    .scale-badge {
+      top: 16px;
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .model-note {
+      right: 16px;
+      bottom: 16px;
+      min-height: 46px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      line-height: 1.45;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+
+    .visual-wrap[data-mode="model"] .model-note {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scale-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--cyan);
+      box-shadow: 0 0 18px currentColor;
+      color: var(--cyan);
+    }
+
+    .info {
+      padding: 18px;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .info h2 {
+      margin: 0;
+      font-size: clamp(28px, 4.5vw, 40px);
+      line-height: 1.08;
+    }
+
+    .info p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .truth-box {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid rgba(73, 211, 208, 0.34);
+      border-radius: 8px;
+      background: rgba(73, 211, 208, 0.08);
+    }
+
+    .truth-box strong {
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .truth-box span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .fact-grid { display: grid; gap: 10px; }
+
+    .fact {
+      min-height: 72px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .fact strong { font-size: 13px; color: var(--ink); }
+    .fact span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+
+    .control-strip { padding: 14px; display: grid; gap: 12px; }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    input[type="range"] { width: 100%; accent-color: var(--cyan); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .step {
+      min-height: 42px;
+      padding: 8px 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .step[aria-pressed="true"] {
+      border-color: rgba(73, 211, 208, 0.75);
+      background: rgba(73, 211, 208, 0.14);
+      color: var(--ink);
+    }
+
+    @media (max-width: 900px) {
+      .stage { grid-template-columns: 1fr; }
+      .visual-wrap { min-height: 520px; }
+      .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .topbar { align-items: start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+    }
+
+    @media (max-width: 560px) {
+      .app { width: min(100% - 18px, 1180px); padding-top: 10px; }
+      .visual-wrap { min-height: 440px; }
+      .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .range-row { grid-template-columns: 1fr; gap: 6px; }
+      .mode-toggle { width: 100%; }
+      .home-link { width: 100%; }
+      .model-note { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Scale of Science</h1>
+        <p class="subtitle">원자부터 우주까지, 멋있게 보고 정확하게 다시 확인하는 과학 스케일 여행입니다.</p>
+      </div>
+      <div class="top-actions">
+        <div class="mode-toggle" aria-label="보기 모드">
+          <button class="mode-button" type="button" data-mode-button="photo" aria-pressed="true">감상 모드</button>
+          <button class="mode-button" type="button" data-mode-button="model" aria-pressed="false">정확도 모드</button>
+        </div>
+        <a class="home-link" href="../">← Lab</a>
+      </div>
+    </header>
+
+    <section class="stage" aria-label="과학 스케일 시각화">
+      <div class="visual-wrap" id="visualWrap" data-mode="photo">
+        <div class="photo-scene" id="photoScene" role="img" aria-label="현재 과학 스케일의 사진형 장면"></div>
+        <canvas id="scene" aria-label="정확도 모드 과학 모델 레이어"></canvas>
+        <div class="scale-badge"><span class="scale-dot" id="scaleDot"></span><span id="scaleLabel">10^-10 m · 원자</span></div>
+        <div class="model-note" id="modelNote">전자 구슬 궤도 대신 확률 구름으로 봅니다.</div>
+      </div>
+
+      <aside class="info" aria-live="polite">
+        <p class="kicker" id="field">물리와 화학</p>
+        <h2 id="title">원자</h2>
+        <p id="description">물질을 이루는 기본 단위입니다. 사진처럼 보이는 물체라기보다, 원자핵과 전자 상태를 수학적으로 기술하는 미시 세계입니다.</p>
+        <div class="truth-box">
+          <strong>정확하게 보면</strong>
+          <span id="truth">전자는 작은 행성처럼 돌지 않습니다. 특정 위치에 있을 가능성을 전자구름으로 표현하는 편이 더 정직합니다.</span>
+        </div>
+        <div class="fact-grid">
+          <div class="fact"><strong>크기</strong><span id="size">약 0.1 nm</span></div>
+          <div class="fact"><strong>연결 개념</strong><span id="concept">전하, 양자화, 확률분포</span></div>
+          <div class="fact"><strong>다음으로</strong><span id="next">원자가 결합하면 분자와 결정 구조가 됩니다.</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="control-strip" aria-label="스케일 조절">
+      <div class="range-row">
+        <span>10^-10 m</span>
+        <input id="scaleRange" type="range" min="0" max="7" step="1" value="0" aria-label="과학 스케일 단계">
+        <span>10^26 m</span>
+      </div>
+      <div class="steps" id="steps"></div>
+    </section>
+  </main>
+
+  <script>
+    const worlds = [
+      {
+        title: "원자",
+        field: "물리와 화학",
+        scale: "10^-10 m · 원자",
+        size: "약 0.1 nm",
+        concept: "전하, 양자화, 확률분포",
+        next: "원자가 결합하면 분자와 결정 구조가 됩니다.",
+        description: "물질을 이루는 기본 단위입니다. 사진처럼 보이는 물체라기보다, 원자핵과 전자 상태를 수학적으로 기술하는 미시 세계입니다.",
+        truth: "전자는 작은 행성처럼 돌지 않습니다. 특정 위치에 있을 가능성을 전자구름으로 표현하는 편이 더 정직합니다.",
+        note: "전자 구슬 궤도 대신 확률 구름으로 봅니다.",
+        color: "#49d3d0"
+      },
+      {
+        title: "분자",
+        field: "화학",
+        scale: "10^-9 m · 분자",
+        size: "물 분자 약 0.27 nm",
+        concept: "공유결합, 결합각, 극성",
+        next: "많은 분자가 모이면 단백질, DNA 같은 생체 고분자가 됩니다.",
+        description: "원자들이 결합해 성질이 전혀 다른 구조를 만듭니다. 물의 굽은 결합각, 탄소의 네 방향 결합은 생명의 화학을 여는 작은 기하학입니다.",
+        truth: "공과 막대 모델은 원자와 결합을 크게 부풀린 약속입니다. 실제 전자는 결합 전체에 퍼진 전자밀도로 보는 편이 더 정확합니다.",
+        note: "결합각과 전자밀도를 함께 봅니다.",
+        color: "#f4c35b"
+      },
+      {
+        title: "DNA와 단백질",
+        field: "생화학",
+        scale: "10^-8 m · 생체분자",
+        size: "DNA 폭 약 2 nm",
+        concept: "염기쌍, 나선, 접힘",
+        next: "생체분자는 세포 안에서 정보와 에너지 흐름을 만듭니다.",
+        description: "DNA는 정보를 저장하고 단백질은 세포의 일을 수행합니다. 나선과 접힘은 단순한 모양이 아니라 기능을 결정하는 구조입니다.",
+        truth: "DNA는 뻣뻣한 사다리가 아니라 열운동 속에서 흔들리는 분자입니다. 단백질도 한 가지 그림이 아니라 접힘과 움직임의 앙상블입니다.",
+        note: "나선은 고정 조형물이 아니라 흔들리는 분자입니다.",
+        color: "#f07a94"
+      },
+      {
+        title: "세포",
+        field: "생명과학",
+        scale: "10^-5 m · 세포",
+        size: "대부분 1-100 µm",
+        concept: "막, 소기관, 대사",
+        next: "세포들이 함께 일하면 조직과 기관이 됩니다.",
+        description: "세포는 생명의 가장 작은 작동 단위입니다. 막은 안팎을 나누고, 소기관은 에너지 생산과 물질 합성을 분담합니다.",
+        truth: "교과서 그림처럼 텅 빈 방 안에 소기관이 떠 있는 구조가 아닙니다. 세포 안은 단백질, RNA, 세포골격으로 빽빽한 동적 환경입니다.",
+        note: "빈 공간보다 복잡한 내부 밀도를 강조합니다.",
+        color: "#72d687"
+      },
+      {
+        title: "생명체와 생태계",
+        field: "생물학",
+        scale: "10^0 m · 생명체",
+        size: "사람 약 1.7 m",
+        concept: "기관계, 신경망, 먹이그물",
+        next: "생명체는 지구의 물, 공기, 암석 순환과 연결됩니다.",
+        description: "기관과 조직은 세포들의 협업이고, 생태계는 개체들의 관계망입니다. 에너지와 물질은 몸 안팎을 계속 흐릅니다.",
+        truth: "개체 하나만 따로 떼어 설명하면 절반만 보는 셈입니다. 생명은 몸 안의 조절망과 바깥 생태계의 관계망이 겹쳐진 현상입니다.",
+        note: "몸 안 조절망과 생태 관계망을 같이 봅니다.",
+        color: "#76a9ff"
+      },
+      {
+        title: "지구",
+        field: "지구과학",
+        scale: "10^7 m · 행성",
+        size: "지름 약 12,742 km",
+        concept: "대기, 해류, 판 구조론",
+        next: "행성은 별 주위를 돌며 태양계의 한 구성원이 됩니다.",
+        description: "지구는 암석권, 수권, 대기권, 생물권이 맞물린 거대한 시스템입니다. 작은 변화도 순환을 타고 넓게 퍼집니다.",
+        truth: "대기와 바다는 지구 크기에 비해 매우 얇은 층입니다. 그러나 이 얇은 층의 순환이 기후와 생명 환경을 크게 좌우합니다.",
+        note: "얇은 대기, 해류, 내부 층을 분리해 봅니다.",
+        color: "#49d3d0"
+      },
+      {
+        title: "태양계",
+        field: "천문학",
+        scale: "10^13 m · 태양계",
+        size: "해왕성 궤도 반지름 약 30 AU",
+        concept: "중력, 궤도, 공명",
+        next: "별들은 은하 안에서 거대한 중력 구조를 이룹니다.",
+        description: "태양의 중력이 행성, 소행성, 혜성을 묶습니다. 궤도는 정지한 선이 아니라 끊임없이 갱신되는 낙하 운동입니다.",
+        truth: "행성 크기와 행성 사이 거리를 동시에 실제 비율로 그리면 대부분은 빈 공간입니다. 그래서 정확도 모드는 거리감을 로그 눈금으로 표현합니다.",
+        note: "크기와 거리는 같은 화면에서 동시에 맞추기 어렵습니다.",
+        color: "#f4c35b"
+      },
+      {
+        title: "은하와 우주",
+        field: "우주론",
+        scale: "10^21-10^26 m · 우주",
+        size: "우리 은하 지름 약 10만 광년",
+        concept: "암흑물질, 팽창, 거대구조",
+        next: "관측 가능한 우주는 빛이 도달한 시간의 지도입니다.",
+        description: "별과 성운은 은하를 이루고, 은하들은 필라멘트와 공동으로 이어집니다. 가장 큰 스케일에서는 우주 자체의 팽창이 관측됩니다.",
+        truth: "우주 이미지는 과거의 빛을 보는 지도입니다. 멀리 볼수록 먼 공간만이 아니라 더 오래전 시간을 함께 보는 셈입니다.",
+        note: "거리는 곧 빛의 여행 시간입니다.",
+        color: "#b99cff"
+      }
+    ];
+
+    const photoScene = document.getElementById("photoScene");
+    const visualWrap = document.getElementById("visualWrap");
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const range = document.getElementById("scaleRange");
+    const steps = document.getElementById("steps");
+    const modeButtons = [...document.querySelectorAll("[data-mode-button]")];
+    const atlasPositions = ["0% 0%", "33.333% 0%", "66.666% 0%", "100% 0%", "0% 100%", "33.333% 100%", "66.666% 100%", "100% 100%"];
+    const els = {
+      field: document.getElementById("field"),
+      title: document.getElementById("title"),
+      description: document.getElementById("description"),
+      truth: document.getElementById("truth"),
+      size: document.getElementById("size"),
+      concept: document.getElementById("concept"),
+      next: document.getElementById("next"),
+      scale: document.getElementById("scaleLabel"),
+      dot: document.getElementById("scaleDot"),
+      note: document.getElementById("modelNote")
+    };
+
+    let active = 0;
+    let mode = "photo";
+    let time = 0;
+
+    worlds.forEach((world, index) => {
+      const button = document.createElement("button");
+      button.className = "step";
+      button.type = "button";
+      button.textContent = world.title;
+      button.setAttribute("aria-pressed", index === active ? "true" : "false");
+      button.addEventListener("click", () => setWorld(index));
+      steps.appendChild(button);
+    });
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.modeButton));
+    });
+
+    function fitCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      visualWrap.dataset.mode = nextMode;
+      modeButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", button.dataset.modeButton === nextMode ? "true" : "false");
+      });
+      drawModel();
+    }
+
+    function setWorld(index) {
+      active = index;
+      range.value = index;
+      const world = worlds[index];
+      els.field.textContent = world.field;
+      els.title.textContent = world.title;
+      els.description.textContent = world.description;
+      els.truth.textContent = world.truth;
+      els.size.textContent = world.size;
+      els.concept.textContent = world.concept;
+      els.next.textContent = world.next;
+      els.scale.textContent = world.scale;
+      els.note.textContent = world.note;
+      els.dot.style.color = world.color;
+      els.dot.style.background = world.color;
+      photoScene.style.backgroundPosition = atlasPositions[index];
+      photoScene.setAttribute("aria-label", world.title + " 사진형 과학 장면");
+      [...steps.children].forEach((button, buttonIndex) => {
+        button.setAttribute("aria-pressed", buttonIndex === index ? "true" : "false");
+      });
+      drawModel();
+    }
+
+    function clear() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(3, 7, 14, 0.52)";
+      ctx.fillRect(0, 0, w, h);
+      return { w, h };
+    }
+
+    function label(text, x, y, align = "left") {
+      ctx.font = "800 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      const width = ctx.measureText(text).width + 18;
+      const bx = align === "center" ? x - width / 2 : x;
+      ctx.fillStyle = "rgba(2, 6, 14, 0.72)";
+      ctx.strokeStyle = "rgba(238,244,255,0.18)";
+      ctx.lineWidth = 1;
+      roundRect(bx, y - 15, width, 30, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eef4ff";
+      ctx.fillText(text, align === "center" ? x : x + 9, y);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    function glow(x, y, r, color, alpha = 1) {
+      const aura = ctx.createRadialGradient(x, y, 0, x, y, r * 2.8);
+      aura.addColorStop(0, color);
+      aura.addColorStop(0.38, color + "aa");
+      aura.addColorStop(1, color + "00");
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function atomModel(w, h, world) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const cloud = ctx.createRadialGradient(cx, cy, 6, cx, cy, Math.min(w, h) * 0.34);
+      cloud.addColorStop(0, "rgba(238,244,255,0.14)");
+      cloud.addColorStop(0.38, world.color + "88");
+      cloud.addColorStop(1, world.color + "00");
+      ctx.fillStyle = cloud;
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(w, h) * 0.34, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 260; i += 1) {
+        const a = i * 2.399 + time * 0.08;
+        const r = Math.sqrt((i % 130) / 130) * Math.min(w, h) * 0.32;
+        ctx.globalAlpha = 0.12 + (i % 9) * 0.035;
+        ctx.fillStyle = world.color;
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a * 1.17) * r * 0.72, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      glow(cx, cy, 7, "#f4c35b", 0.95);
+      label("원자핵은 실제 비율보다 크게 표시", cx, cy + Math.min(w, h) * 0.39, "center");
+      label("전자구름: 위치 확률", cx, cy - Math.min(w, h) * 0.37, "center");
+    }
+
+    function moleculeModel(w, h, world) {
+      const cx = w / 2;
+      const cy = h / 2 + 20;
+      const pts = [[0, -20, 34, "#e95d6f", "O"], [-96, 58, 22, "#eef4ff", "H"], [96, 58, 22, "#eef4ff", "H"]];
+      ctx.strokeStyle = "rgba(238,244,255,0.62)";
+      ctx.lineWidth = 12;
+      ctx.lineCap = "round";
+      [[0, 1], [0, 2]].forEach(([a, b]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + pts[a][0], cy + pts[a][1]);
+        ctx.lineTo(cx + pts[b][0], cy + pts[b][1]);
+        ctx.stroke();
+      });
+      pts.forEach(([x, y, r, color, name]) => {
+        glow(cx + x, cy + y, r, color, 0.82);
+        label(name, cx + x, cy + y, "center");
+      });
+      ctx.strokeStyle = world.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy - 4, 76, 0.72, 2.42);
+      ctx.stroke();
+      label("물 분자 결합각 약 104.5°", cx, cy + 132, "center");
+    }
+
+    function dnaModel(w, h, world) {
+      const cx = w / 2;
+      const top = h * 0.18;
+      const bottom = h * 0.78;
+      for (let i = 0; i < 38; i += 1) {
+        const t = i / 37;
+        const y = top + (bottom - top) * t;
+        const phase = t * Math.PI * 7.4 + time * 0.9;
+        const x1 = cx + Math.sin(phase) * 92;
+        const x2 = cx + Math.sin(phase + Math.PI) * 92;
+        ctx.strokeStyle = i % 2 ? "rgba(73,211,208,0.72)" : "rgba(240,122,148,0.72)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.stroke();
+        glow(x1, y, 4.5, world.color, 0.72);
+        glow(x2, y, 4.5, "#49d3d0", 0.72);
+      }
+      label("폭 약 2 nm", cx, bottom + 36, "center");
+      label("염기쌍 정보 + 열운동", cx, top - 32, "center");
+    }
+
+    function cellModel(w, h, world) {
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.fillStyle = "rgba(114,214,135,0.12)";
+      ctx.strokeStyle = "rgba(114,214,135,0.82)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, Math.min(w, 620) * 0.31, h * 0.25, 0.04, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      glow(cx - 34, cy - 10, 54, "#76a9ff", 0.7);
+      for (let i = 0; i < 40; i += 1) {
+        const a = i * 1.7 + time * 0.35;
+        const r = 35 + (i % 7) * 18;
+        glow(cx + Math.cos(a) * r * 1.65, cy + Math.sin(a * 1.3) * r * 0.78, 3 + (i % 3), i % 2 ? world.color : "#f4c35b", 0.6);
+      }
+      label("핵", cx - 34, cy - 10, "center");
+      label("소기관과 분자로 빽빽한 내부", cx, cy + h * 0.31, "center");
+    }
+
+    function networkModel(w, h, world) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const pts = [];
+      for (let i = 0; i < 22; i += 1) {
+        const a = (Math.PI * 2 * i) / 22;
+        const r = 60 + (i % 5) * 32;
+        pts.push([cx + Math.cos(a + time * 0.04) * r * 1.45, cy + Math.sin(a + time * 0.05) * r]);
+      }
+      ctx.strokeStyle = "rgba(118,169,255,0.32)";
+      ctx.lineWidth = 2;
+      pts.forEach((p, i) => {
+        for (let j = i + 1; j < pts.length; j += 1) {
+          if ((i * 3 + j) % 7 === 0) {
+            ctx.beginPath();
+            ctx.moveTo(p[0], p[1]);
+            ctx.lineTo(pts[j][0], pts[j][1]);
+            ctx.stroke();
+          }
+        }
+      });
+      pts.forEach((p, i) => glow(p[0], p[1], i % 6 === 0 ? 14 : 7, i % 3 ? world.color : "#72d687", 0.75));
+      label("기관계와 생태계는 관계망", cx, h * 0.18, "center");
+      label("에너지 흐름 · 물질 순환", cx, h * 0.84, "center");
+    }
+
+    function earthModel(w, h) {
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = Math.min(w, h) * 0.25;
+      glow(cx, cy, r, "#235fbb", 0.76);
+      ctx.strokeStyle = "rgba(238,244,255,0.45)";
+      ctx.lineWidth = 2;
+      [0.34, 0.62, 0.86].forEach((scale) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.strokeStyle = "#49d3d0";
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 5; i += 1) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 18 + i * 6, Math.PI * (0.15 + i * 0.06), Math.PI * (1.35 + i * 0.08));
+        ctx.stroke();
+      }
+      label("대기와 바다는 매우 얇은 층", cx, cy - r - 48, "center");
+      label("핵 · 맨틀 · 지각", cx, cy + r + 44, "center");
+    }
+
+    function solarModel(w, h, world) {
+      const left = w * 0.12;
+      const right = w * 0.88;
+      const y = h * 0.52;
+      const planets = [
+        ["수", 0.39, 3], ["금", 0.72, 5], ["지", 1, 5], ["화", 1.52, 4],
+        ["목", 5.2, 12], ["토", 9.58, 10], ["천", 19.2, 8], ["해", 30.1, 8]
+      ];
+      ctx.strokeStyle = "rgba(238,244,255,0.36)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+      glow(left, y, 22, "#f4c35b", 0.95);
+      label("태양", left, y + 54, "center");
+      planets.forEach(([name, au, radius]) => {
+        const t = Math.log10(au + 1) / Math.log10(31.1);
+        const x = left + (right - left) * t;
+        glow(x, y, radius, name === "지" ? "#76a9ff" : world.color, 0.86);
+        label(name, x, y - 34 - radius, "center");
+      });
+      label("거리: 로그 눈금", w / 2, h * 0.18, "center");
+      label("실제 비율로는 대부분 빈 공간", w / 2, h * 0.84, "center");
+    }
+
+    function galaxyModel(w, h, world) {
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(time * 0.025);
+      for (let i = 0; i < 420; i += 1) {
+        const arm = i % 4;
+        const t = i / 420;
+        const a = t * Math.PI * 8 + arm * Math.PI * 0.5;
+        const r = 12 + t * Math.min(w, h) * 0.32;
+        ctx.globalAlpha = 0.2 + (i % 8) * 0.04;
+        ctx.fillStyle = i % 5 ? world.color : "#eef4ff";
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r, Math.sin(a) * r * 0.52, i % 11 === 0 ? 1.8 : 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "rgba(73,211,208,0.35)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 7; i += 1) {
+        const x = w * (0.15 + i * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(x, h * 0.16 + Math.sin(i) * 20);
+        ctx.bezierCurveTo(x + 36, h * 0.34, x - 20, h * 0.62, x + 48, h * 0.82);
+        ctx.stroke();
+      }
+      label("은하: 별들의 중력 구조", cx, h * 0.16, "center");
+      label("멀리 볼수록 더 오래전 빛", cx, h * 0.84, "center");
+    }
+
+    const drawers = [atomModel, moleculeModel, dnaModel, cellModel, networkModel, earthModel, solarModel, galaxyModel];
+
+    function drawModel() {
+      fitCanvas();
+      const { w, h } = clear();
+      drawers[active](w, h, worlds[active]);
+    }
+
+    function animate() {
+      time += 0.016;
+      if (mode === "model") drawModel();
+      requestAnimationFrame(animate);
+    }
+
+    range.addEventListener("input", (event) => setWorld(Number(event.target.value)));
+    window.addEventListener("resize", drawModel);
+    fitCanvas();
+    setWorld(0);
+    animate();
+  </script>
+</body>
+</html>
