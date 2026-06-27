@@ -279,7 +279,7 @@
             <div><dt>내심 I</dt><dd>세 각의 이등분선이 만나는 점, 세 변에서 같은 거리</dd></div>
             <div><dt>외심 O</dt><dd>세 변의 수직이등분선이 만나는 점, 세 꼭짓점에서 같은 거리</dd></div>
             <div><dt>무게중심 G</dt><dd>세 중선이 만나는 점, 꼭짓점에서 중선의 2:1 지점</dd></div>
-            <div><dt>수심 H</dt><dd>각 꼭짓점에서 마주보는 변에 수직으로 내린 세 높이가 만나는 점</dd></div>
+            <div><dt>수심 H</dt><dd>세 꼭짓점에서 각각의 대변(마주 보는 변)에 내린 세 수선이 만나는 교점</dd></div>
             <div><dt>방심 E</dt><dd>한 변과 두 변의 연장선에 접하는 방접원의 중심</dd></div>
           </dl>
           <p class="note" id="insight">외심과 수심은 둔각삼각형에서 바깥으로 나갈 수 있습니다.</p>
@@ -434,6 +434,26 @@
       });
     }
 
+    function drawRightAngleMark(vertex, foot, sideA, sideB, color) {
+      const sideLength = dist(sideA, sideB);
+      const altitudeLength = dist(vertex, foot);
+      if (sideLength < 1 || altitudeLength < 1) return;
+      const size = 15;
+      const sideUnit = { x: (sideB.x - sideA.x) / sideLength, y: (sideB.y - sideA.y) / sideLength };
+      const altitudeUnit = { x: (vertex.x - foot.x) / altitudeLength, y: (vertex.y - foot.y) / altitudeLength };
+      const p1 = { x: foot.x + sideUnit.x * size, y: foot.y + sideUnit.y * size };
+      const p2 = { x: p1.x + altitudeUnit.x * size, y: p1.y + altitudeUnit.y * size };
+      const p3 = { x: foot.x + altitudeUnit.x * size, y: foot.y + altitudeUnit.y * size };
+      const mark = add(svg, "polyline", {
+        points: `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`,
+        fill: "none",
+        stroke: color,
+        "stroke-width": 2.5,
+        "stroke-linejoin": "round"
+      });
+      mark.style.pointerEvents = "none";
+    }
+
     function drawCircle(center, radius, color, extra = "") {
       if (!Number.isFinite(radius) || radius > 1200) return;
       add(svg, "circle", {
@@ -475,6 +495,9 @@
         drawLine(A, data.altitudeFeet[0], colors.orthocenter);
         drawLine(B, data.altitudeFeet[1], colors.orthocenter);
         drawLine(C, data.altitudeFeet[2], colors.orthocenter);
+        drawRightAngleMark(A, data.altitudeFeet[0], B, C, colors.orthocenter);
+        drawRightAngleMark(B, data.altitudeFeet[1], C, A, colors.orthocenter);
+        drawRightAngleMark(C, data.altitudeFeet[2], A, B, colors.orthocenter);
       }
       if (state.visible.circumcenter) {
         drawLine(data.circumcenter, A, colors.circumcenter);
